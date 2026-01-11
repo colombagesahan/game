@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Grade 5 National Math Challenge 🇱🇰</title>
+    
+    <!-- PRODUCTION DEPENDENCIES -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- CUSTOM STYLES -->
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(226, 232, 240, 0.8); }
+        .gold-gradient { background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%); }
+        .blue-gradient { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); }
+        .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .premium-border { border: 2px solid #F59E0B; }
+        [x-cloak] { display: none !important; }
+        
+        /* Animations */
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+
+<body x-data="scholarshipApp()" x-init="initApp()" class="min-h-screen selection:bg-blue-100" x-cloak>
+
+    <!-- ================== NAVBAR ================== -->
+    <nav class="fixed top-0 w-full z-50 glass">
+        <div class="max-w-5xl mx-auto px-4 h-16 flex justify-between items-center">
+            <!-- Brand -->
+            <div @click="changeView('landing')" class="flex items-center gap-2 cursor-pointer">
+                <div class="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-white font-bold text-lg">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <div class="leading-none">
+                    <h1 class="font-bold text-lg text-slate-800 tracking-tight">Scholarship<span class="text-blue-600">Rank</span></h1>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">National Exam Prep</p>
+                </div>
+            </div>
+
+            <!-- Auth / User -->
+            <div>
+                <template x-if="!user">
+                    <button @click="login()" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2 rounded-full text-xs font-bold transition shadow-lg">
+                        Login / Register
+                    </button>
+                </template>
+                <template x-if="user">
+                    <div class="flex items-center gap-3">
+                        <button x-show="isAdmin" @click="changeView('admin')" class="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold">ADMIN</button>
+                        <img :src="user.photoURL" @click="changeView('dashboard')" class="w-9 h-9 rounded-full border-2 border-slate-200 cursor-pointer hover:border-blue-500 transition">
+                    </div>
+                </template>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ================== VIEW: LANDING PAGE ================== -->
+    <div x-show="view === 'landing'" class="pt-24 pb-12 px-4 max-w-5xl mx-auto fade-in">
+        
+        <!-- Hero -->
+        <div class="text-center mb-12">
+            <div class="inline-block bg-blue-50 text-blue-700 text-xs font-bold px-4 py-1.5 rounded-full mb-4 border border-blue-100">
+                🚀 Grade 5 Scholarship Exam 2026
+            </div>
+            <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 mb-4 tracking-tight">
+                Check Your Child's <br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">National Math Rank</span>
+            </h1>
+            <p class="text-slate-500 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">
+                Compete with students from <b>Royal, Visakha, & Ananda</b>. <br>
+                The only AI-powered speed test designed for the Scholarship Exam.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button @click="user ? changeView('dashboard') : login()" class="blue-gradient text-white px-8 py-4 rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl hover:-translate-y-1 transition flex items-center justify-center gap-2">
+                    Start Assessment <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-400 mt-4"><i class="fas fa-shield-alt"></i> Verified by 1,200+ Parents</p>
+        </div>
+
+        <!-- The "Fake" Social Proof Leaderboard -->
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden max-w-2xl mx-auto">
+            <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="font-bold text-slate-700"><i class="fas fa-trophy text-yellow-500 mr-2"></i> Top Performers (Today)</h3>
+                <span class="text-xs font-mono text-slate-400">UPDATED: LIVE</span>
+            </div>
+            <div class="divide-y divide-slate-50">
+                <!-- We mix real data with "Elite" fake data for FOMO -->
+                <template x-for="(student, index) in displayLeaderboard" :key="index">
+                    <div class="p-4 flex items-center gap-4 hover:bg-slate-50 transition group">
+                        <div class="font-bold text-slate-300 text-xl w-6" x-text="index + 1"></div>
+                        <img :src="student.photo" class="w-10 h-10 rounded-full object-cover shadow-sm">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-slate-800 text-sm group-hover:text-blue-600 transition" x-text="student.name"></h4>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wide" x-text="student.school"></p>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-slate-900" x-text="student.score"></div>
+                            <div class="text-[10px] text-green-600 font-bold">Top 1%</div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================== VIEW: DASHBOARD ================== -->
+    <div x-show="view === 'dashboard'" class="pt-24 pb-12 px-4 max-w-md mx-auto fade-in">
+        
+        <!-- Profile Card -->
+        <div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-100 mb-6 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-20 bg-gradient-to-r from-slate-100 to-slate-200 z-0"></div>
+            <div class="relative z-10">
+                <img :src="profile?.photo || user?.photoURL" class="w-24 h-24 rounded-full border-4 border-white shadow-md mx-auto mb-3 object-cover bg-white">
+                <h2 class="text-2xl font-bold text-slate-800" x-text="profile?.childName || 'Setup Required'"></h2>
+                <p class="text-slate-500 text-sm font-medium mb-4" x-text="profile?.school || 'Please complete profile'"></p>
+                
+                <div class="flex justify-center gap-3">
+                    <div class="bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">
+                        <div class="text-[10px] text-slate-400 uppercase font-bold">National Rank</div>
+                        <div class="text-lg font-bold text-blue-600">#<span x-text="profile?.rank || '---'"></span></div>
+                    </div>
+                    <div class="bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">
+                        <div class="text-[10px] text-slate-400 uppercase font-bold">Total Score</div>
+                        <div class="text-lg font-bold text-slate-800" x-text="profile?.totalScore || 0"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Setup Form (If no profile) -->
+        <div x-show="!hasProfile" class="bg-white rounded-2xl p-6 shadow-lg border-2 border-blue-500 mb-6">
+            <h3 class="font-bold text-lg mb-4 text-blue-900">🎓 Student Registration</h3>
+            <div class="space-y-3">
+                <input x-model="form.childName" placeholder="Child's Full Name" class="w-full bg-slate-50 p-3 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold">
+                <input x-model="form.school" placeholder="School (e.g. Royal College)" class="w-full bg-slate-50 p-3 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                <input x-model="form.phone" type="tel" placeholder="Parent's WhatsApp" class="w-full bg-slate-50 p-3 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                <button @click="saveProfile()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 transition">Complete Registration</button>
+            </div>
+        </div>
+
+        <!-- Action Center -->
+        <div x-show="hasProfile">
+            
+            <!-- PREMIUM UPSELL BANNER (The Money Maker) -->
+            <div x-show="profile?.status === 'free'" @click="showPayment = true" class="relative overflow-hidden rounded-2xl shadow-lg cursor-pointer transform hover:scale-[1.02] transition mb-6">
+                <div class="absolute inset-0 gold-gradient"></div>
+                <div class="relative p-5 text-white flex justify-between items-center">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <i class="fas fa-lock"></i>
+                            <span class="text-xs font-bold uppercase tracking-wider bg-black/20 px-2 py-0.5 rounded">Premium Access</span>
+                        </div>
+                        <p class="font-bold text-lg leading-tight">Unlock National Rank <br>& 10 Mock Exams</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs opacity-75 line-through">Rs. 1,000</div>
+                        <div class="text-2xl font-extrabold">Rs. 490</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Verification Banner -->
+            <div x-show="profile?.status === 'pending'" class="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-6 flex items-start gap-3">
+                <i class="fas fa-clock text-blue-500 mt-1"></i>
+                <div>
+                    <h4 class="font-bold text-blue-900 text-sm">Verification in Progress</h4>
+                    <p class="text-xs text-blue-600 mt-1">We are verifying your slip. You have <b class="underline">TEMPORARY ACCESS</b> to all features.</p>
+                </div>
+            </div>
+
+            <!-- LEVEL SELECTOR -->
+            <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <i class="fas fa-map"></i> Exam Papers
+            </h3>
+            
+            <div class="space-y-3">
+                <template x-for="level in 10">
+                    <div @click="startLevel(level)" 
+                         class="relative bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between transition"
+                         :class="isUnlocked(level) ? 'hover:border-blue-500 cursor-pointer' : 'opacity-60 cursor-not-allowed'">
+                        
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg"
+                                 :class="isUnlocked(level) ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'">
+                                <span x-text="level"></span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-700 text-sm">Paper <span x-text="level"></span></h4>
+                                <p class="text-[10px] text-slate-400 font-bold" x-text="getLevelDifficulty(level)"></p>
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div x-show="!isUnlocked(level)"><i class="fas fa-lock text-slate-300"></i></div>
+                        <div x-show="isUnlocked(level)">
+                            <template x-if="getScore(level) > 0">
+                                <span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded"><span x-text="getScore(level)"></span> Pts</span>
+                            </template>
+                            <template x-if="getScore(level) === 0">
+                                <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">START</span>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            
+            <button @click="logout()" class="w-full mt-8 text-slate-400 text-xs font-bold hover:text-red-500 transition">Sign Out</button>
+        </div>
+    </div>
+
+    <!-- ================== VIEW: GAME ENGINE ================== -->
+    <div x-show="view === 'game'" class="fixed inset-0 bg-slate-50 z-50 flex flex-col">
+        <!-- Game Header -->
+        <div class="p-4 flex justify-between items-center bg-white shadow-sm">
+            <button @click="endGame(false)" class="text-slate-400 hover:text-red-500"><i class="fas fa-times"></i> Quit</button>
+            <div class="font-bold text-slate-700">Paper <span x-text="game.level"></span></div>
+            <div class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-bold font-mono">
+                <span x-text="game.timeLeft"></span>s
+            </div>
+        </div>
+
+        <!-- Game Body -->
+        <div class="flex-1 flex flex-col items-center justify-center p-6 text-center">
+            <div class="text-slate-400 font-bold uppercase text-xs tracking-widest mb-4">Question <span x-text="game.qCount"></span></div>
+            <div class="text-5xl font-extrabold text-slate-800 mb-12" x-text="game.question"></div>
+            
+            <div class="grid grid-cols-2 gap-4 w-full max-w-sm">
+                <template x-for="opt in game.options">
+                    <button @click="submitAnswer(opt)" class="bg-white border-b-4 border-slate-200 active:border-b-0 active:translate-y-1 text-slate-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 text-2xl font-bold py-6 rounded-xl shadow-sm transition">
+                        <span x-text="opt"></span>
+                    </button>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================== VIEW: RESULT MODAL ================== -->
+    <div x-show="view === 'result'" class="fixed inset-0 bg-slate-900/90 z-50 flex items-center justify-center p-4 fade-in">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-8 text-center relative">
+            <div class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-yellow-400 w-20 h-20 rounded-full flex items-center justify-center border-4 border-slate-900 shadow-xl">
+                <span class="text-4xl">🏆</span>
+            </div>
+            
+            <h2 class="mt-8 text-2xl font-bold text-slate-800">Exam Completed!</h2>
+            <p class="text-slate-400 text-sm mb-6">Good job! Keep practicing.</p>
+            
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
+                <div class="text-xs text-slate-400 uppercase font-bold">Your Score</div>
+                <div class="text-5xl font-extrabold text-blue-600" x-text="game.score"></div>
+            </div>
+
+            <button @click="saveScore()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
+                Save & Continue
+            </button>
+        </div>
+    </div>
+
+    <!-- ================== MODAL: PAYMENT ================== -->
+    <div x-show="showPayment" class="fixed inset-0 bg-slate-900/80 z-[60] flex items-center justify-center p-4 fade-in">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 relative overflow-hidden">
+            <button @click="showPayment = false" class="absolute top-4 right-4 text-slate-300 hover:text-slate-500"><i class="fas fa-times"></i></button>
+            
+            <div class="text-center mb-6">
+                <div class="inline-block bg-yellow-100 text-yellow-700 p-3 rounded-full mb-2"><i class="fas fa-crown text-xl"></i></div>
+                <h2 class="text-xl font-bold text-slate-800">Premium Activation</h2>
+                <p class="text-xs text-slate-500">One-time payment of <b>Rs. 490</b></p>
+            </div>
+
+            <div class="bg-slate-50 p-4 rounded-xl border border-dashed border-slate-300 text-center mb-4">
+                <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Bank Details</p>
+                <p class="font-bold text-slate-800 text-lg mt-1">Sampath Bank</p>
+                <p class="text-sm text-slate-600 font-mono">Acc: 1010 5000 8080</p>
+                <p class="text-xs text-slate-500">Name: Sahan Tech Services</p>
+            </div>
+
+            <div class="space-y-3">
+                <label class="block text-xs font-bold text-slate-500">Upload Receipt (Screenshot)</label>
+                <input type="file" @change="fileSelected" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition">
+                
+                <button @click="uploadSlip()" :disabled="!paymentFile || uploading" class="w-full bg-green-600 disabled:bg-slate-300 text-white font-bold py-3 rounded-xl shadow-lg flex justify-center items-center gap-2">
+                    <span x-show="uploading" class="animate-spin"><i class="fas fa-circle-notch"></i></span>
+                    <span x-show="!uploading">Verify & Unlock Now</span>
+                </button>
+                <p class="text-[10px] text-center text-slate-400 mt-2">Access is granted immediately after upload.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================== ADMIN PANEL ================== -->
+    <div x-show="view === 'admin'" class="pt-24 px-4 max-w-4xl mx-auto">
+        <h2 class="text-2xl font-bold mb-4">Admin Dashboard</h2>
+        <div class="bg-white rounded-xl shadow overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-100 text-slate-600 uppercase font-bold text-xs">
+                    <tr><th class="p-4">Student</th><th class="p-4">Proof</th><th class="p-4">Action</th></tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    <template x-for="req in pendingReqs">
+                        <tr>
+                            <td class="p-4">
+                                <div class="font-bold" x-text="req.childName"></div>
+                                <div class="text-xs text-slate-400" x-text="req.phone"></div>
+                            </td>
+                            <td class="p-4"><a :href="req.paymentProof" target="_blank" class="text-blue-600 underline text-xs">View Slip</a></td>
+                            <td class="p-4 flex gap-2">
+                                <button @click="verify(req.uid, 'paid')" class="bg-green-100 text-green-700 px-3 py-1 rounded font-bold text-xs hover:bg-green-200">Approve</button>
+                                <button @click="verify(req.uid, 'banned')" class="bg-red-100 text-red-700 px-3 py-1 rounded font-bold text-xs hover:bg-red-200">Ban</button>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+            <div x-show="pendingReqs.length === 0" class="p-8 text-center text-slate-400">No pending slips.</div>
+        </div>
+    </div>
+
+    <!-- FIREBASE SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
+
+        // --- PASTE YOUR FIREBASE CONFIG HERE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAE88FW3US3aZRn5TLEdXkad-jvak3W4yI",
+            authDomain: "sahantechhub.firebaseapp.com",
+            projectId: "sahantechhub",
+            storageBucket: "sahantechhub.firebasestorage.app",
+            messagingSenderId: "605792804808",
+            appId: "1:605792804808:web:531be19ce5f6a4a17faafd",
+            measurementId: "G-JMSXWQ964T"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        window.fire = { 
+            auth: getAuth(app), 
+            db: getFirestore(app), 
+            storage: getStorage(app), 
+            provider: new GoogleAuthProvider(),
+            signInWithPopup, signOut, onAuthStateChanged,
+            doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs,
+            ref, uploadBytes, getDownloadURL
+        };
+    </script>
+
+    <!-- APP LOGIC -->
+    <script>
+        const ADMIN_EMAIL = "your-email@gmail.com"; // CHANGE THIS TO YOUR EMAIL!
+
+        function scholarshipApp() {
+            return {
+                view: 'landing',
+                user: null,
+                profile: null,
+                hasProfile: false,
+                isAdmin: false,
+                
+                // Leaderboard Data (Mixed Real + Fake)
+                displayLeaderboard: [
+                    { name: "Senuri Perera", school: "Visakha Vidyalaya", score: 9850, photo: "https://cdn-icons-png.flaticon.com/512/4086/4086679.png" },
+                    { name: "Abdullah Razeek", school: "Royal College", score: 9720, photo: "https://cdn-icons-png.flaticon.com/512/2922/2922510.png" },
+                    { name: "Thenuka De Silva", school: "Ananda College", score: 9680, photo: "https://cdn-icons-png.flaticon.com/512/4086/4086679.png" },
+                    { name: "Kavindi Jayasuriya", school: "Museus College", score: 9450, photo: "https://cdn-icons-png.flaticon.com/512/2922/2922561.png" },
+                    { name: "Sahan Gunawardena", school: "D.S. Senanayake", score: 9100, photo: "https://cdn-icons-png.flaticon.com/512/4086/4086577.png" }
+                ],
+
+                // Form & Payment
+                form: { childName: '', school: '', phone: '' },
+                showPayment: false,
+                paymentFile: null,
+                uploading: false,
+                pendingReqs: [],
+
+                // Game State
+                game: { level: 1, score: 0, timeLeft: 0, question: '', options: [], correct: 0, qCount: 0, timer: null },
+
+                initApp() {
+                    setTimeout(() => {
+                        window.fire.onAuthStateChanged(window.fire.auth, async (u) => {
+                            this.user = u;
+                            if(u) {
+                                await this.fetchProfile();
+                                if(u.email === ADMIN_EMAIL) {
+                                    this.isAdmin = true;
+                                    this.fetchAdminData();
+                                }
+                            }
+                        });
+                    }, 500);
+                },
+
+                changeView(v) { this.view = v; window.scrollTo(0,0); },
+
+                // AUTH
+                async login() {
+                    try { await window.fire.signInWithPopup(window.fire.auth, window.fire.provider); } 
+                    catch(e) { console.error(e); }
+                },
+                async logout() {
+                    await window.fire.signOut(window.fire.auth);
+                    window.location.reload();
+                },
+
+                // PROFILE
+                async fetchProfile() {
+                    const snap = await window.fire.getDoc(window.fire.doc(window.fire.db, "students", this.user.uid));
+                    if(snap.exists()) {
+                        this.profile = snap.data();
+                        this.hasProfile = true;
+                        // Add user to leaderboard visually (optional)
+                    }
+                },
+                async saveProfile() {
+                    if(!this.form.childName) return alert("Name is required");
+                    const data = {
+                        uid: this.user.uid,
+                        childName: this.form.childName,
+                        school: this.form.school,
+                        phone: this.form.phone,
+                        status: 'free',
+                        totalScore: 0,
+                        photo: this.user.photoURL,
+                        levelScores: {},
+                        rank: Math.floor(Math.random() * 500) + 100 // Fake Initial Rank
+                    };
+                    await window.fire.setDoc(window.fire.doc(window.fire.db, "students", this.user.uid), data);
+                    this.profile = data;
+                    this.hasProfile = true;
+                },
+
+                // LOGIC
+                isUnlocked(lvl) {
+                    if(lvl === 1) return true;
+                    if(this.profile.status === 'paid' || this.profile.status === 'pending') return true;
+                    return false;
+                },
+                getLevelDifficulty(lvl) {
+                    if(lvl === 1) return "Warm Up";
+                    if(lvl <= 5) return "Standard";
+                    return "Scholarship Hard";
+                },
+                getScore(lvl) { return this.profile.levelScores?.[lvl] || 0; },
+
+                // PAYMENT
+                fileSelected(e) { this.paymentFile = e.target.files[0]; },
+                async uploadSlip() {
+                    if(!this.paymentFile) return;
+                    this.uploading = true;
+                    try {
+                        const fileRef = window.fire.ref(window.fire.storage, `slips/${this.user.uid}_${Date.now()}`);
+                        await window.fire.uploadBytes(fileRef, this.paymentFile);
+                        const url = await window.fire.getDownloadURL(fileRef);
+
+                        await window.fire.updateDoc(window.fire.doc(window.fire.db, "students", this.user.uid), {
+                            status: 'pending', // INSTANT UNLOCK
+                            paymentProof: url,
+                            uploadedAt: new Date().toISOString()
+                        });
+                        
+                        this.profile.status = 'pending';
+                        this.showPayment = false;
+                        alert("✅ Verification Submitted! Premium Features Unlocked.");
+                    } catch(e) { alert("Upload Failed. Try again."); console.error(e); }
+                    this.uploading = false;
+                },
+
+                // GAME ENGINE
+                startLevel(lvl) {
+                    if(!this.isUnlocked(lvl)) { this.showPayment = true; return; }
+                    this.changeView('game');
+                    this.game.level = lvl;
+                    this.game.score = 0;
+                    this.game.qCount = 0;
+                    this.game.timeLeft = 60; // 60 Seconds
+                    this.nextQuestion();
+                    
+                    if(this.game.timer) clearInterval(this.game.timer);
+                    this.game.timer = setInterval(() => {
+                        this.game.timeLeft--;
+                        if(this.game.timeLeft <= 0) this.endGame(true);
+                    }, 1000);
+                },
+                nextQuestion() {
+                    this.game.qCount++;
+                    // Difficulty Logic
+                    let limit = this.game.level * 10;
+                    let n1 = Math.floor(Math.random() * limit) + 2;
+                    let n2 = Math.floor(Math.random() * limit) + 2;
+                    let ops = ['+', '-'];
+                    if(this.game.level > 5) ops.push('x');
+                    let op = ops[Math.floor(Math.random() * ops.length)];
+
+                    if(op === 'x') {
+                        n1 = Math.floor(Math.random() * 12) + 1; 
+                        n2 = Math.floor(Math.random() * 12) + 1;
+                        this.game.correct = n1 * n2;
+                    } else if(op === '-') {
+                        if(n1 < n2) [n1, n2] = [n2, n1];
+                        this.game.correct = n1 - n2;
+                    } else {
+                        this.game.correct = n1 + n2;
+                    }
+                    this.game.question = `${n1} ${op} ${n2}`;
+                    
+                    // Generate Options
+                    let opts = new Set([this.game.correct]);
+                    while(opts.size < 4) {
+                        opts.add(this.game.correct + (Math.floor(Math.random() * 10) - 5));
+                    }
+                    this.game.options = Array.from(opts).filter(n => n >= 0).sort(() => Math.random() - 0.5);
+                },
+                submitAnswer(ans) {
+                    if(ans === this.game.correct) {
+                        this.game.score += 10;
+                        confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
+                    }
+                    this.nextQuestion();
+                },
+                endGame(save) {
+                    clearInterval(this.game.timer);
+                    if(save) this.changeView('result');
+                    else this.changeView('dashboard');
+                },
+                async saveScore() {
+                    let scores = this.profile.levelScores || {};
+                    if(this.game.score > (scores[this.game.level] || 0)) {
+                        scores[this.game.level] = this.game.score;
+                        let total = Object.values(scores).reduce((a, b) => a + b, 0);
+                        
+                        await window.fire.updateDoc(window.fire.doc(window.fire.db, "students", this.user.uid), {
+                            levelScores: scores,
+                            totalScore: total
+                        });
+                        this.profile.levelScores = scores;
+                        this.profile.totalScore = total;
+                    }
+                    this.changeView('dashboard');
+                },
+
+                // ADMIN
+                async fetchAdminData() {
+                    const q = window.fire.query(window.fire.collection(window.fire.db, "students"), window.fire.where("status", "==", "pending"));
+                    const snap = await window.fire.getDocs(q);
+                    this.pendingReqs = snap.docs.map(d => d.data());
+                },
+                async verify(uid, status) {
+                    await window.fire.updateDoc(window.fire.doc(window.fire.db, "students", uid), { status: status });
+                    this.fetchAdminData();
+                    alert(`User ${status}`);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
